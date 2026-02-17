@@ -18,7 +18,8 @@ class PostController extends Controller
     public function show($id)
     {
         $post = Post::with('user', 'comments', 'categories')->findOrFail($id);
-        return response()->json($post);
+        $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
+        return view('post', ['post' => $post, 'currentUser' => $currentUser]);
     }
     public function store(Request $request)
     {
@@ -57,6 +58,53 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
         return response()->json($post);
+    }
+    
+    /**
+     * Show create post form
+     */
+    public function createForm(Request $request)
+    {
+        $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
+        return view('crearpost', ['currentUser' => $currentUser]);
+    }
+    
+    /**
+     * Store post from web form
+     */
+    public function storeFromWeb(Request $request)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+        
+        $userId = session('user_id', 1);
+        
+        Post::create([
+            'title' => $validatedData['title'],
+            'content' => $validatedData['content'],
+            'user_id' => $userId,
+        ]);
+        
+        return redirect('/')->with('success', '¡Post creado exitosamente!');
+    }
+    
+    /**
+     * Delete post from web
+     */
+    public function destroyFromWeb($id)
+    {
+        $post = Post::findOrFail($id);
+        $userId = session('user_id', 1);
+        
+        if ($post->user_id != $userId) {
+            return response()->json(['error' => 'No tienes permiso para eliminar este post'], 403);
+        }
+        
+        $post->delete();
+        
+        return response()->json(['success' => 'Post eliminado'], 200);
     }
 
 }

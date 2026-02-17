@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio - Blog</title>
     <script src="inicio.js"></script>
-    <script src=""></script>
+    <link rel="stylesheet" href="inicio.css">
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -117,42 +118,20 @@
             color: #34495e;
             margin-top: 30px;
         }
+
     </style>
 </head>
 <body>
+    @include('components.navbar')
+    
     <div class="container">
         <h1>📝 Blog - Inicio</h1>
         
         <section id="posts-section">
-            <!-- Formulario para crear posts -->
-            <h2>✏️ Crear nuevo Post</h2>
-            <div class="form-section">
-                <form id="create-post-form">
-                    <div>
-                        <label for="title"><strong>Título:</strong></label>
-                        <input type="text" id="title" name="title" placeholder="Ingresa el título del post" required>
-                    </div>
-                    <div>
-                        <label for="content"><strong>Contenido:</strong></label>
-                        <textarea id="content" name="content" placeholder="Escribe el contenido del post" required></textarea>
-                    </div>
-                    <button type="submit">Crear Post</button>
-                </form>
-            </div>
-
             <!-- Lista de posts -->
             <h2>📰 Lista de Posts</h2>
             <div id="posts-list" class="loading">Cargando posts...</div>
-
-            <!-- Detalle de post -->
-            <h2>📖 Detalle del Post</h2>
-            <div id="post-detail" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                Selecciona un post para ver más detalles.
-            </div>
         </section>
-
-        
-
 
     </div>
 
@@ -161,8 +140,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const postsList = document.getElementById('posts-list');
-            const postDetail = document.getElementById('post-detail');
-            const form = document.getElementById('create-post-form');
 
             function fetchPosts() {
                 const baseUrl = window.location.origin;
@@ -206,91 +183,7 @@
                     postHTML += '<a href="/post/' + p.id + '" class="btn" style="display: inline-block; text-decoration: none;">Ver detalles completos</a>';
                     
                     postContainer.innerHTML = postHTML;
-                    
-                    // Agregar evento al botón
-                    const btn = postContainer.querySelector('button');
-                    if (btn) {
-                        btn.addEventListener('click', function() {
-                            fetchPost(p.id);
-                        });
-                    }
-                    
                     postsList.appendChild(postContainer);
-                });
-            }
-
-            function fetchPost(id) {
-                const baseUrl = window.location.origin;
-                const url = baseUrl + '/post/' + id;
-                
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        const postDate = new Date(data.created_at).toLocaleDateString('es-ES', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        });
-                        
-                        let detailHTML = '<h3>' + escapeHtml(data.title) + '</h3>';
-                        detailHTML += '<div class="post-meta">';
-                        detailHTML += 'Por: ' + escapeHtml(data.user?.name || 'Anónimo') + ' | ' + postDate;
-                        detailHTML += '</div>';
-                        detailHTML += '<p>' + escapeHtml(data.content) + '</p>';
-                        
-                        if (data.comments && data.comments.length > 0) {
-                            detailHTML += '<h4>Comentarios (' + data.comments.length + '):</h4>';
-                            data.comments.forEach(c => {
-                                detailHTML += '<div class="comment">';
-                                detailHTML += '<div class="comment-author">' + escapeHtml(c.name) + '</div>';
-                                detailHTML += '<small>Por: ' + escapeHtml(c.user?.name || 'Anónimo') + '</small>';
-                                detailHTML += '<p>' + escapeHtml(c.content) + '</p>';
-                                detailHTML += '</div>';
-                            });
-                        }
-                        
-                        postDetail.innerHTML = detailHTML;
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        postDetail.innerHTML = '<div style="color: red;">Error al cargar el post: ' + error.message + '</div>';
-                    });
-            }
-
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const title = document.getElementById('title').value.trim();
-                    const content = document.getElementById('content').value.trim();
-                    
-                    if (!title || !content) {
-                        alert('Por favor completa todos los campos');
-                        return;
-                    }
-                    
-                    const baseUrl = window.location.origin;
-                    const url = baseUrl + '/post';
-                    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': token
-                        },
-                        body: JSON.stringify({ title, content, user_id: 1 })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert('Post creado exitosamente');
-                        form.reset();
-                        fetchPosts();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al crear el post: ' + error.message);
-                    });
                 });
             }
 

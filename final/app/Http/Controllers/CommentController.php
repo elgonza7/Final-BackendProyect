@@ -46,6 +46,27 @@ class CommentController extends Controller
     }
 
     /**
+     * Store a comment from web form
+     */
+    public function storeFromWeb(Request $request, $postId)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        // Crear comentario con user_id = 1 (por defecto) y el post_id
+        Comment::create([
+            'name' => $validatedData['name'],
+            'content' => $validatedData['content'],
+            'post_id' => $postId,
+            'user_id' => 1, // Por defecto, puedes cambiar esto
+        ]);
+
+        return redirect("/post/{$postId}")->with('success', '¡Comentario publicado exitosamente!');
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Comment $comment)
@@ -88,5 +109,22 @@ class CommentController extends Controller
         $comment->delete();
 
         return response()->json(null, 204);
+    }
+    
+    /**
+     * Delete comment from web
+     */
+    public function destroyFromWeb($id)
+    {
+        $comment = Comment::findOrFail($id);
+        $userId = session('user_id', 1);
+        
+        if ($comment->user_id != $userId) {
+            return response()->json(['error' => 'No tienes permiso para eliminar este comentario'], 403);
+        }
+        
+        $comment->delete();
+        
+        return response()->json(['success' => 'Comentario eliminado'], 200);
     }
 }
