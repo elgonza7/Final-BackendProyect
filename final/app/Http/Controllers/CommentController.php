@@ -53,15 +53,21 @@ class CommentController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
-        // Crear comentario con user_id = 1 (por defecto) y el post_id
-        Comment::create([
+        $data = [
             'name' => $validatedData['name'],
             'content' => $validatedData['content'],
             'post_id' => $postId,
-            'user_id' => 1, // Por defecto, puedes cambiar esto
-        ]);
+            'user_id' => auth()->id(),
+        ];
+        
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('comments', 'public');
+        }
+
+        Comment::create($data);
 
         return redirect("/post/{$postId}")->with('success', '¡Comentario publicado exitosamente!');
     }
@@ -117,9 +123,9 @@ class CommentController extends Controller
     public function destroyFromWeb($id)
     {
         $comment = Comment::findOrFail($id);
-        $userId = session('user_id', 1);
         
-        if ($comment->user_id != $userId) {
+        // Verificar que el usuario sea el propietario o admin
+        if ($comment->user_id != auth()->id() && !auth()->user()->hasRole('admin')) {
             return response()->json(['error' => 'No tienes permiso para eliminar este comentario'], 403);
         }
         

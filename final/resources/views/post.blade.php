@@ -192,6 +192,12 @@
                 
                 <h1>{{ $post->title }}</h1>
                 
+                @if($post->image)
+                    <div style="margin-bottom: 20px;">
+                        <img src="/storage/{{ $post->image }}" alt="{{ $post->title }}" style="width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                    </div>
+                @endif
+                
                 <div class="post-meta">
                     <p><strong>👤 Autor:</strong> {{ $post->user->name ?? 'Anónimo' }}</p>
                     <p><strong>📅 Fecha:</strong> <span class="time-info">{{ $post->created_at->format('d \d\e F \d\e Y') }}</span></p>
@@ -210,12 +216,16 @@
                 </div>
 
                 <div style="margin-bottom: 40px;">
-                    <a href="/comments/{{ $post->id }}" class="add-comment-btn">✍️ Agregar Comentario</a>
-                    @if($post->user_id == session('user_id', 1))
-                        <button onclick="deletePost({{ $post->id }})" style="background: #e74c3c; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1em; transition: all 0.3s ease; margin-left: 10px;">
-                            🗑️ Eliminar Post
-                        </button>
-                    @endif
+                    @auth
+                        <a href="/comments/{{ $post->id }}" class="add-comment-btn">✍️ Agregar Comentario</a>
+                        @if($post->user_id == auth()->id() || (auth()->user()->hasRole('admin')))
+                            <button onclick="deletePost({{ $post->id }})" style="background: #e74c3c; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1em; transition: all 0.3s ease; margin-left: 10px;">
+                                🗑️ Eliminar Post
+                            </button>
+                        @endif
+                    @else
+                        <a href="/login" class="add-comment-btn">🔑 Inicia sesión para comentar</a>
+                    @endauth
                 </div>
                 
                 <!--comentarios -->
@@ -230,15 +240,22 @@
                                 <div class="comment-meta">
                                     👤 Por: <strong>{{ $comment->user->name ?? 'Anónimo' }}</strong> | 
                                     ⏰ <span class="time-ago">{{ $comment->created_at->diffForHumans() }}</span>
-                                    @if($comment->user_id == session('user_id', 1))
-                                        <button onclick="deleteComment({{ $comment->id }})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-left: 10px;">
-                                            🗑️ Eliminar
-                                        </button>
-                                    @endif
+                                    @auth
+                                        @if($comment->user_id == auth()->id() || auth()->user()->hasRole('admin'))
+                                            <button onclick="deleteComment({{ $comment->id }})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 0.8em; margin-left: 10px;">
+                                                🗑️ Eliminar
+                                            </button>
+                                        @endif
+                                    @endauth
                                 </div>
                                 <div class="comment-content">
 {{ $comment->content }}
                                 </div>
+                                @if($comment->image)
+                                    <div style="margin-top: 10px;">
+                                        <img src="/storage/{{ $comment->image }}" alt="Imagen del comentario" style="max-width: 100%; max-height: 300px; border-radius: 6px; border: 1px solid #ecf0f1; cursor: pointer;" onclick="this.style.maxHeight = this.style.maxHeight === 'none' ? '300px' : 'none'">
+                                    </div>
+                                @endif
                             </div>
                         @endforeach
                     </div>

@@ -163,7 +163,7 @@
             @endif
 
             <!-- Formulario para agregar comentario -->
-            <form action="/comment/store/{{ $post->id }}" method="POST">
+            <form action="/comment/store/{{ $post->id }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
                     <label for="name"><strong>Titulo Del Comentario:</strong></label>
@@ -181,6 +181,17 @@
                     @enderror
                 </div>
 
+                <div class="form-group">
+                    <label for="image"><strong>📷 Imagen (opcional):</strong></label>
+                    <input type="file" id="image" name="image" accept="image/*" style="padding: 8px;">
+                    <div id="image-preview" style="margin-top: 10px; display: none;">
+                        <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 2px solid #ecf0f1;">
+                    </div>
+                    @error('image')
+                        <span style="color: #e74c3c; font-size: 0.9em;">{{ $message }}</span>
+                    @enderror
+                </div>
+
                 <div class="button-group">
                     <button type="submit">📤 Publicar Comentario</button>
                     <a href="/post/{{ $post->id }}" class="cancel-btn">❌ Cancelar</a>
@@ -188,5 +199,23 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    previewImg.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

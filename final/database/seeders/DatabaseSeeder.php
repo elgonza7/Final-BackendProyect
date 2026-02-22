@@ -15,15 +15,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Primero crear roles y permisos
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+        ]);
 
-        User::firstOrCreate(
+        // Crear usuario administrador
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $admin->assignRole('admin');
+
+        // Crear usuario de prueba normal
+        $testUser = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
                 'password' => bcrypt('password'),
+                'email_verified_at' => now(),
             ]
         );
+        $testUser->assignRole('user');
+
+        // User::factory(10)->create();
+        
         $this->call([
             CategorySeeder::class,
             PostSeeder::class,

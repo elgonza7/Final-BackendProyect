@@ -14,6 +14,7 @@ class Comment extends Model
         'content',
         'post_id',
         'user_id',
+        'image',
     ];
 
     protected $casts = [

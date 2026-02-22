@@ -8,9 +8,17 @@ use Illuminate\Http\Request;
 class PostController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::with('user', 'comments', 'categories')->get();
+        $query = Post::with('user', 'comments', 'categories')->orderBy('created_at', 'desc');
+        
+        if ($request->has('category') && $request->category != '') {
+            $query->whereHas('categories', function($q) use ($request) {
+                $q->where('categories.id', $request->category);
+            });
+        }
+        
+        $posts = $query->get();
         return response()->json($posts);
     }
 
@@ -18,8 +26,7 @@ class PostController extends Controller
     public function show($id)
     {
         $post = Post::with('user', 'comments', 'categories')->findOrFail($id);
-        $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
-        return view('post', ['post' => $post, 'currentUser' => $currentUser]);
+        return view('post', ['post' => $post, 'currentUser' => auth()->user()]);
     }
     public function store(Request $request)
     {
@@ -65,8 +72,7 @@ class PostController extends Controller
      */
     public function createForm(Request $request)
     {
-        $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
-        return view('crearpost', ['currentUser' => $currentUser]);
+        return view('crearpost', ['currentUser' => auth()->user()]);
     }
     
     /**
@@ -77,15 +83,26 @@ class PostController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
         
-        $userId = session('user_id', 1);
-        
-        Post::create([
+        $data = [
             'title' => $validatedData['title'],
             'content' => $validatedData['content'],
-            'user_id' => $userId,
-        ]);
+            'user_id' => auth()->id(),
+        ];
+        
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('posts', 'public');
+        }
+        
+        $post = Post::create($data);
+        
+        if ($request->has('categories')) {
+            $post->categories()->sync($request->categories);
+        }
         
         return redirect('/')->with('success', '¡Post creado exitosamente!');
     }
@@ -96,9 +113,9 @@ class PostController extends Controller
     public function destroyFromWeb($id)
     {
         $post = Post::findOrFail($id);
-        $userId = session('user_id', 1);
         
-        if ($post->user_id != $userId) {
+        // Verificar que el usuario sea el propietario o admin
+        if ($post->user_id != auth()->id() && !auth()->user()->hasRole('admin')) {
             return response()->json(['error' => 'No tienes permiso para eliminar este post'], 403);
         }
         

@@ -3,15 +3,24 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\Web\AuthController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
-    return view('inicio', ['currentUser' => $currentUser]);
-});
+    return view('inicio', ['currentUser' => auth()->user()]);
+})->name('home');
 
 Route::get('/test', function () {
     return view('test');
 });
+
+// Rutas de autenticación
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Posts
 Route::get('/post', [PostController::class, 'index']);
@@ -20,42 +29,51 @@ Route::post('/post', [PostController::class, 'store']);
 Route::post('/post/update/{id}', [PostController::class, 'update']);
 Route::post('/post/delete/{id}', [PostController::class, 'destroy']);
 
-// Posts Web Form
-Route::get('/crear-post', [PostController::class, 'createForm']);
-Route::post('/post/crear', [PostController::class, 'storeFromWeb']);
-Route::post('/post/delete/{id}', [PostController::class, 'destroyFromWeb']);
+// Rutas protegidas (requieren autenticación)
+Route::middleware(['auth'])->group(function () {
+    // Posts Web Form
+    Route::get('/crear-post', [PostController::class, 'createForm'])->name('post.create');
+    Route::post('/post/crear', [PostController::class, 'storeFromWeb'])->name('post.store');
+    Route::post('/post/delete/{id}', [PostController::class, 'destroyFromWeb'])->name('post.delete');
 
-// Comments
-Route::get('/comments/{id}', function($id) {
-    $post = App\Models\Post::findOrFail($id);
-    $currentUser = auth()->user() ?? \App\Models\User::find(session('user_id', 1));
-    return view('comments', ['post' => $post, 'currentUser' => $currentUser]);
-});
-Route::post('/comment/store/{id}', [CommentController::class, 'storeFromWeb']);
-Route::post('/comment/store', [CommentController::class, 'store']);
-Route::get('/comment', [CommentController::class, 'index']);
-Route::get('/comment/create', [CommentController::class, 'create']);
+    // Comments
+    Route::get('/comments/{id}', function($id) {
+        $post = App\Models\Post::findOrFail($id);
+        return view('comments', ['post' => $post, 'currentUser' => auth()->user()]);
+    });
+    Route::post('/comment/store/{id}', [CommentController::class, 'storeFromWeb'])->name('comment.store');
+    Route::post('/comment/delete/{id}', [CommentController::class, 'destroyFromWeb'])->name('comment.delete');
 
-// Comments Web Form
-Route::post('/comment/delete/{id}', [CommentController::class, 'destroyFromWeb']);
+    // User Account
+    Route::get('/mi-cuenta', function () {
+        $user = Auth::user()->load('posts.comments', 'comments');
+        $totalComentsReceived = App\Models\Comment::whereIn('post_id', $user->posts->pluck('id'))->count();
+        return view('cuenta', ['user' => $user, 'totalComentsReceived' => $totalComentsReceived]);
+    })->name('account');
+    
+    Route::post('/mi-cuenta/update', [UserController::class, 'updateProfile'])->name('account.update');
+    Route::post('/mi-cuenta/customize', [UserController::class, 'updateCustomization'])->name('account.customize');
+    
+    Route::get('/mis-posts', function () {
+        $user = Auth::user()->load('posts.comments', 'comments');
+        $totalComentsReceived = App\Models\Comment::whereIn('post_id', $user->posts->pluck('id'))->count();
+        return view('cuenta', ['user' => $user, 'totalComentsReceived' => $totalComentsReceived]);
+    })->name('my-posts');
 
-// User Account
-Route::get('/mi-cuenta', function () {
-    $userId = session('user_id', 1);
-    $user = App\Models\User::with('posts', 'comments')->findOrFail($userId);
-    $totalComentsReceived = App\Models\Comment::whereIn('post_id', $user->posts->pluck('id'))->count();
-    return view('cuenta', ['user' => $user, 'totalComentsReceived' => $totalComentsReceived]);
-});
+    // Perfil público de usuario
+    Route::get('/usuario/{id}', function ($id) {
+        $user = App\Models\User::with(['posts.comments', 'comments.post', 'roles'])->findOrFail($id);
+        $totalComentsReceived = App\Models\Comment::whereIn('post_id', $user->posts->pluck('id'))->count();
+        return view('perfil', ['user' => $user, 'totalComentsReceived' => $totalComentsReceived]);
+    })->name('user.profile');
 
-Route::get('/mis-posts', function () {
-    $userId = session('user_id', 1);
-    $user = App\Models\User::with('posts', 'comments')->findOrFail($userId);
-    $totalComentsReceived = App\Models\Comment::whereIn('post_id', $user->posts->pluck('id'))->count();
-    return view('cuenta', ['user' => $user, 'totalComentsReceived' => $totalComentsReceived]);
-});
-
-Route::get('/logout', function () {
-    session()->forget('user_id');
-    return redirect('/');
+    // Admin: Lista de usuarios
+    Route::get('/admin/usuarios', function () {
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'No tienes permisos para acceder a esta página.');
+        }
+        $users = App\Models\User::withCount(['posts', 'comments'])->with('roles')->orderBy('created_at', 'desc')->get();
+        return view('usuarios', ['users' => $users]);
+    })->name('admin.users');
 });
 

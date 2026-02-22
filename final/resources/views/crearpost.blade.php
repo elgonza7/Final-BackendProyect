@@ -156,7 +156,7 @@
                 </div>
             @endif
             
-            <form action="/post/crear" method="POST">
+            <form action="/post/crear" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
                     <label for="title"><strong>Título del Post:</strong></label>
@@ -184,6 +184,29 @@
                     @enderror
                 </div>
                 
+                <div class="form-group">
+                    <label for="image"><strong>📷 Imagen del Post (opcional):</strong></label>
+                    <input type="file" id="image" name="image" accept="image/*" style="padding: 8px;">
+                    <div id="image-preview" style="margin-top: 10px; display: none;">
+                        <img id="preview-img" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid #ecf0f1;">
+                    </div>
+                    @error('image')
+                        <span style="color: #e74c3c; font-size: 0.9em;">{{ $message }}</span>
+                    @enderror
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>🏷️ Categorías:</strong></label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                        @foreach(\App\Models\Category::all() as $category)
+                            <label style="display: flex; align-items: center; gap: 5px; padding: 6px 14px; background: #f0f0f0; border-radius: 20px; cursor: pointer; font-weight: normal; font-size: 0.9em;">
+                                <input type="checkbox" name="categories[]" value="{{ $category->id }}" style="width: auto;">
+                                {{ $category->name }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+                
                 <div class="button-group">
                     <button type="submit">📝 Crear Post</button>
                     <a href="/" class="cancel-btn">❌ Cancelar</a>
@@ -191,5 +214,23 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    previewImg.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
