@@ -7,47 +7,35 @@ use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // GET /comment - Listar todos los comentarios
     public function index()
     {
         $comments = Comment::with('user', 'post')->get();
         return response()->json($comments);
-
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    // GET /comment/create - Obtener comentarios (para formulario)
     public function create()
     {
         $comments = Comment::with('user', 'post')->get();
         return response()->json($comments);
-
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // POST /comment - Crear comentario desde API
     public function store(Request $request)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string',
-            'post_id' => 'required|exists:posts,id',
-            'user_id' => 'required|exists:users,id',
+            'post_id' => 'required|exists:posts,id', // el post debe existir
+            'user_id' => 'required|exists:users,id', // el user debe existir
         ]);
 
         $comment = Comment::create($validatedData);
-
-        return response()->json($comment, 201);    
-
+        return response()->json($comment, 201);
     }
 
-    /**
-     * Store a comment from web form
-     */
+    // POST /post/{postId}/comment - Crear comentario desde formulario web
     public function storeFromWeb(Request $request, $postId)
     {
         $validatedData = $request->validate([
@@ -59,8 +47,8 @@ class CommentController extends Controller
         $data = [
             'name' => $validatedData['name'],
             'content' => $validatedData['content'],
-            'post_id' => $postId,
-            'user_id' => auth()->id(),
+            'post_id' => $postId, // viene de la URL
+            'user_id' => auth()->id(), // usuario logueado
         ];
         
         if ($request->hasFile('image')) {
@@ -68,31 +56,26 @@ class CommentController extends Controller
         }
 
         Comment::create($data);
-
+        // Redirigir de vuelta al post con mensaje flash
         return redirect("/post/{$postId}")->with('success', '¡Comentario publicado exitosamente!');
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // GET /comment/{comment} - Ver un comentario específico
     public function show(Comment $comment)
     {
+        // load() = Lazy Loading (carga después), con with() sería Eager Loading
         $comment->load('user', 'post');
         return response()->json($comment);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    // GET /comment/{comment}/edit - Obtener comentario para editar
     public function edit(Comment $comment)
     {
         $comment->load('user', 'post');
         return response()->json($comment);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    // PUT/PATCH /comment/{comment} - Actualizar comentario
     public function update(Request $request, Comment $comment)
     {
         $validatedData = $request->validate([
@@ -103,34 +86,27 @@ class CommentController extends Controller
         ]);
 
         $comment->update($validatedData);
-
         return response()->json($comment);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    // DELETE /comment/{comment} - Eliminar comentario
     public function destroy(Comment $comment)
     {
         $comment->delete();
-
         return response()->json(null, 204);
     }
     
-    /**
-     * Delete comment from web
-     */
+    // DELETE /comment/{id}/web - Eliminar comentario desde interfaz web
     public function destroyFromWeb($id)
     {
         $comment = Comment::findOrFail($id);
         
-        // Verificar que el usuario sea el propietario o admin
+        // Solo el autor del comentario o un admin pueden eliminarlo
         if ($comment->user_id != auth()->id() && !auth()->user()->hasRole('admin')) {
             return response()->json(['error' => 'No tienes permiso para eliminar este comentario'], 403);
         }
         
         $comment->delete();
-        
         return response()->json(['success' => 'Comentario eliminado'], 200);
     }
 }

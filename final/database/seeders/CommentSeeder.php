@@ -7,12 +7,9 @@ use Illuminate\Database\Seeder;
 
 class CommentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    // Comentarios de prueba para los posts
     public function run(): void
     {
-        //
         $comments = [
             [
                 'name' => 'Comentario 1',
@@ -26,12 +23,31 @@ class CommentSeeder extends Seeder
                 'post_id' => 1,
                 'user_id' => 1,
             ],
+            [
+                'name' => 'Comentario 3',
+                'content' => 'Contenido del comentario 3',
+                'post_id' => 2,
+                'user_id' => 2,
+            ],
+            [
+                'name' => 'Comentario 4',
+                'content' => 'Contenido del comentario 4',
+                'post_id' => 2,
+                'user_id' => 2,
+            ],
+            [
+                'name' => 'Comentario 5',
+                'content' => 'Contenido del comentario 5',
+                'post_id' => 3,
+                'user_id' => 1,
+            ],
         ];
 
         foreach ($comments as $comment) {
+            // Insertar si no existe (búsqueda por nombre del comentario)
             \App\Models\Comment::firstOrCreate(
-                ['name' => $comment['name']], // Busca por este campo único
-                $comment // Si no existe, crea con todos estos datos
+                ['name' => $comment['name']],
+                $comment
             );
         }
     }

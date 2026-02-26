@@ -6,79 +6,96 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes - Rutas para la API REST
 |--------------------------------------------------------------------------
-|
-| Aquí registramos las rutas de la API de la aplicación.
-| Estas rutas son cargadas por el RouteServiceProvider y todas serán
-| asignadas al grupo de middleware "api".
-|
+| NOTA: Todas estas rutas tienen prefijo /api automáticamente
+| Ejemplo: Route::get('/posts') -> http://localhost/api/posts
+| 
+| Middleware 'api': incluye throttling (rate limiting) y accept JSON
+| auth:sanctum: usa Laravel Sanctum para autenticación con tokens
+|--------------------------------------------------------------------------
 */
 
-// Rutas públicas de autenticación
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// === RUTAS PÚBLICAS (sin autenticación) ===
+
+// Autenticación
+Route::post('/register', [AuthController::class, 'register']);  // registro de usuario
+Route::post('/login', [AuthController::class, 'login']);         // login (devuelve token)
 
 // Verificación de email
+// {id} = user ID, {hash} = hash de verificación (seguridad)
+// name() = darle nombre a la ruta para usarla en otros lados (ej: url() o route())
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
     ->name('verification.verify');
 
-// Rutas públicas de posts (ver posts sin autenticación)
-Route::get('/posts', [PostController::class, 'index']);
-Route::get('/posts/{id}', [PostController::class, 'show']);
+// Posts públicos (cualquiera puede ver)
+Route::get('/posts', [PostController::class, 'index']);      // listar todos
+Route::get('/posts/{id}', [PostController::class, 'show']); // ver uno específico
 
-// Rutas públicas de comentarios (ver comentarios sin autenticación)
+// Categorías públicas
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{category}', [CategoryController::class, 'show']);
+
+// Comentarios públicos
 Route::get('/comments', [CommentController::class, 'index']);
 Route::get('/posts/{postId}/comments', [CommentController::class, 'getPostComments']);
 
-// Rutas protegidas (requieren autenticación)
+// === RUTAS PROTEGIDAS (requieren token de autenticación) ===
+// middleware() = aplicar middlewares
+// 'auth:sanctum' = verificar que venga un token válido en el header
+// 'log.activity' = middleware custom para registrar actividad del usuario
 Route::middleware(['auth:sanctum', 'log.activity'])->group(function () {
     
     // Autenticación
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);  // cerrar sesión (invalida token)
+    Route::get('/me', [AuthController::class, 'me']);           // obtener usuario actual
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
     
-    // Posts (usuarios autenticados)
-    Route::post('/posts', [PostController::class, 'store']);              // Crear post
-    Route::put('/posts/{id}', [PostController::class, 'update']);         // Editar post (propio)
-    Route::delete('/posts/{id}', [PostController::class, 'destroy']);     // Eliminar post (propio o admin)
-    Route::get('/my-posts', [PostController::class, 'myPosts']);          // Ver mis posts
+    // CRUD Posts (usuarios autenticados)
+    Route::post('/posts', [PostController::class, 'store']);              // crear mi post
+    Route::put('/posts/{id}', [PostController::class, 'update']);         // editar mi post  
+    Route::delete('/posts/{id}', [PostController::class, 'destroy']);     // eliminar (mío o si soy admin)
+    Route::get('/my-posts', [PostController::class, 'myPosts']);          // mis posts
     
-    // Comentarios (usuarios autenticados)
-    Route::post('/comments', [CommentController::class, 'store']);        // Crear comentario
-    Route::put('/comments/{id}', [CommentController::class, 'update']);   // Editar comentario (propio)
-    Route::delete('/comments/{id}', [CommentController::class, 'destroy']); // Eliminar comentario (propio o admin)
-    Route::get('/my-comments', [CommentController::class, 'myComments']); // Ver mis comentarios
+    // CRUD Comentarios
+    Route::post('/comments', [CommentController::class, 'store']);        
+    Route::put('/comments/{id}', [CommentController::class, 'update']);   
+    Route::delete('/comments/{id}', [CommentController::class, 'destroy']); 
+    Route::get('/my-comments', [CommentController::class, 'myComments']);
     
-    // Rutas de administrador (requieren rol de admin)
+    // === RUTAS DE ADMINISTRADOR ===
+    // middleware 'role:admin' = solo usuarios con rol 'admin' (Spatie Permission)
+    // prefix('admin') = todas las rutas llevan /admin/ (ej: /api/admin/users)
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
         
-        // Gestión de usuarios
-        Route::get('/users', [AdminController::class, 'getAllUsers']);
-        Route::get('/users/{id}', [AdminController::class, 'getUser']);
+        // CRUD Categorías (solo admin)
+        Route::post('/categories', [CategoryController::class, 'store']);             
+        Route::put('/categories/{category}', [CategoryController::class, 'update']);  
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy']); 
         
-        // Gestión de actividades
+        // Gestión de usuarios
+        Route::get('/users', [AdminController::class, 'getAllUsers']);        // listar todos
+        Route::get('/users/{id}', [AdminController::class, 'getUser']);       // ver uno
+        
+        // Log de actividades (para auditoría/seguimiento)
         Route::get('/activities', [AdminController::class, 'getAllActivities']);
         Route::get('/users/{id}/activities', [AdminController::class, 'getUserActivities']);
         
-        // Estadísticas
+        // Dashboard: estadísticas del sistema
         Route::get('/statistics', [AdminController::class, 'getStatistics']);
         
-        // Gestión de roles y permisos
+        // Spatie: asignar/quitar roles y permisos
         Route::post('/users/{id}/roles', [AdminController::class, 'assignRole']);
         Route::delete('/users/{id}/roles', [AdminController::class, 'removeRole']);
         Route::post('/users/{id}/permissions', [AdminController::class, 'givePermission']);
         Route::delete('/users/{id}/permissions', [AdminController::class, 'revokePermission']);
         
-        // Gestión de posts (admin puede eliminar cualquier post)
-        // Ya cubierto por la ruta /posts/{id} con la verificación de rol admin
-        
-        // Gestión de comentarios (admin puede eliminar cualquier comentario)
-        // Ya cubierto por la ruta /comments/{id} con la verificación de rol admin
+        // Nota: Posts y comments ya se pueden eliminar desde las rutas de arriba
+        // porque el controller verifica si el user es admin
     });
 });
 

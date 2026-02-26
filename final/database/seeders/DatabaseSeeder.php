@@ -10,28 +10,25 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
+    // SEEDER PRINCIPAL: aquí llamo a todos los demás seeders en orden
+    // ORDEN IMPORTANTE: primero roles, luego users, luego el resto (por las FK)
     public function run(): void
     {
-        // Primero crear roles y permisos
-        $this->call([
-            RolesAndPermissionsSeeder::class,
-        ]);
+        // Paso 1: Roles y permisos (usando Spatie)
+        $this->call([RolesAndPermissionsSeeder::class]);
 
-        // Crear usuario administrador
+        // Paso 2: Crear usuarios de prueba con roles específicos
+        // firstOrCreate = busca por email, si no existe lo crea (evita duplicados)
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin User',
-                'password' => bcrypt('password'),
+                'password' => bcrypt('password'), // TODO: cambiar en producción!
                 'email_verified_at' => now(),
             ]
         );
-        $admin->assignRole('admin');
+        $admin->assignRole('admin'); // Spatie: asignar rol
 
-        // Crear usuario de prueba normal
         $testUser = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -42,11 +39,24 @@ class DatabaseSeeder extends Seeder
         );
         $testUser->assignRole('user');
 
-        // User::factory(10)->create();
+        $commonUser = User::firstOrCreate(
+            ['email' => 'user@example.com'],
+            [
+                'name' => 'Common User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $commonUser->assignRole('user');
+
+        // Factory: crear 10 usuarios random con Faker
+        User::factory(10)->create();
         
+        // Paso 3: Datos del blog (orden: categories -> posts -> relación -> comments)
         $this->call([
             CategorySeeder::class,
             PostSeeder::class,
+            PostCategorySeeder::class, // tabla pivote!
             CommentSeeder::class,
         ]);
         $this->command->info('¡Sembrado completado!');

@@ -9,71 +9,73 @@ use Spatie\Permission\Models\Permission;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    // SPATIE PERMISSIONS: sistema de roles y permisos
+    // Documentación: https://spatie.be/docs/laravel-permission
     public function run(): void
     {
-        // Resetear caché de roles y permisos
+        // Limpiar caché de Spatie (importante al crear/modificar permisos)
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Crear permisos con guard 'web'
+        // Definir todos los permisos del sistema
+        // Formato: 'verbo recurso' (ej: 'create posts')
         $permissions = [
-            // Posts
+            // CRUD Posts
             'view posts',
             'create posts',
             'edit posts',
             'delete posts',
             'publish posts',
             
-            // Comentarios
+            // CRUD Comentarios
             'view comments',
             'create comments',
             'edit comments',
             'delete comments',
             
-            // Usuarios
+            // CRUD Usuarios
             'view users',
             'create users',
             'edit users',
             'delete users',
             
-            // Roles y permisos
+            // Gestión de roles
             'manage roles',
             'manage permissions',
             
-            // Categorías
+            // CRUD Categorías
             'view categories',
             'create categories',
             'edit categories',
             'delete categories',
             
-            // Admin
+            // Panel admin
             'access admin panel',
             'view user activities',
             'view statistics',
         ];
 
+        // Crear cada permiso en la BD
         foreach ($permissions as $permission) {
             Permission::create(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // Refrescar la caché de permisos después de crearlos
+        // Limpiar caché nuevamente después de crear
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Crear roles y asignar permisos
-
-        // Rol: Usuario (permisos limitados)
-        // Solo puede: ver posts, crear comentarios/mensajes, ver todos los posts
+        // === CREAR ROLES Y ASIGNAR PERMISOS ===
+        
+        // ROL USER: usuario básico registrado
+        // Solo puede ver y comentar, no crear/editar posts
         $userRole = Role::create(['name' => 'user', 'guard_name' => 'web']);
         $userRole->givePermissionTo([
-            'view posts',       // Ver posts
-            'view comments',    // Ver comentarios
-            'create comments',  // Enviar mensajes/comentarios
-            'view categories',  // Ver categorías
+            'view posts',
+            'view comments',
+            'create comments',  // puede comentar
+            'view categories',
         ]);
 
-        // Rol: Editor (permisos intermedios)
+        // ROL EDITOR: puede crear y editar posts
+        // No puede eliminar ni gestionar usuarios
         $editorRole = Role::create(['name' => 'editor', 'guard_name' => 'web']);
         $editorRole->givePermissionTo([
             'view posts',
@@ -88,18 +90,19 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit categories',
         ]);
 
-        // Rol: Moderador (permisos avanzados)
+        // ROL MODERATOR: puede eliminar posts/comments ofensivos
+        // Puede ver actividad de usuarios pero no eliminarlos
         $moderatorRole = Role::create(['name' => 'moderator', 'guard_name' => 'web']);
         $moderatorRole->givePermissionTo([
             'view posts',
             'create posts',
             'edit posts',
-            'delete posts',
+            'delete posts',      // puede moderar contenido
             'publish posts',
             'view comments',
             'create comments',
             'edit comments',
-            'delete comments',
+            'delete comments',   // puede eliminar comentarios ofensivos
             'view users',
             'view categories',
             'create categories',
@@ -108,8 +111,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view user activities',
         ]);
 
-        // Rol: Administrador (todos los permisos)
-        // Puede: ver todos los perfiles, eliminar posts de otros, eliminar comentarios, todo lo del usuario
+        // ROL ADMIN: control total del sistema
+        // Permission::all() = TODOS los permisos
         $adminRole = Role::create(['name' => 'admin', 'guard_name' => 'web']);
         $adminRole->givePermissionTo(Permission::all());
 
