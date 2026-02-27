@@ -7,7 +7,6 @@ use Illuminate\Database\Seeder;
 
 class CommentSeeder extends Seeder
 {
-    // Comentarios de prueba para los posts
     public function run(): void
     {
         $comments = [
@@ -44,7 +43,6 @@ class CommentSeeder extends Seeder
         ];
 
         foreach ($comments as $comment) {
-            // Insertar si no existe (búsqueda por nombre del comentario)
             \App\Models\Comment::firstOrCreate(
                 ['name' => $comment['name']],
                 $comment

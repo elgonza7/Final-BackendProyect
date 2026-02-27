@@ -7,12 +7,8 @@ use Illuminate\Database\Seeder;
 
 class PostSeeder extends Seeder
 {
-    // Crear posts de ejemplo para desarrollo
     public function run(): void
     {
-        // Array de posts
-        // IMPORTANTE: no incluyo category_id aquí porque la relación es many-to-many
-        // Las categorías se asignan en PostCategorySeeder!
         $posts = [
             [
                 'title' => 'Primer Post',
@@ -39,18 +35,14 @@ class PostSeeder extends Seeder
                 'content' => 'Contenido del quinto post',
                 'user_id' => 3,
             ],
-
         ];
 
-
         foreach ($posts as $post) {
-            // firstOrCreate evita duplicados si ejecuto el seeder múltiples veces
             \App\Models\Post::firstOrCreate(
                 ['title' => $post['title']],
                 $post
             );
         }
         $this->command->info('Posts creados exitosamente!');
-        
     }
 }

@@ -8,17 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Imagen en posts
         Schema::table('posts', function (Blueprint $table) {
             $table->string('image')->nullable()->after('content');
         });
 
-        // Imagen en comments
         Schema::table('comments', function (Blueprint $table) {
             $table->string('image')->nullable()->after('content');
         });
 
-        // Avatar y personalización en users
         Schema::table('users', function (Blueprint $table) {
             $table->string('avatar')->nullable()->after('password');
             $table->string('profile_bg_color')->default('#667eea')->after('avatar');

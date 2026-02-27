@@ -10,26 +10,23 @@ class Comment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',      // título del comentario
-        'content',   // contenido del comentario
-        'post_id',   // FK: a qué post pertenece
-        'user_id',   // FK: quién escribió el comentario
-        'image',     // imagen opcional
+        'name',
+        'content',
+        'post_id',
+        'user_id',
+        'image',
     ];
 
-    // Auto-convertir a Carbon para manipular fechas fácilmente
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    // Relación N:1 - Un comentario pertenece a UN usuario
     public function user()
     {
         return $this->belongsTo(User::class);
     }
     
-    // Relación N:1 - Un comentario pertenece a UN post
     public function post()
     {
         return $this->belongsTo(Post::class);
