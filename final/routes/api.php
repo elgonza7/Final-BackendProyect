@@ -28,6 +28,7 @@ Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
 Route::get('/posts', [PostController::class, 'index']);
 Route::get('/posts/{id}', [PostController::class, 'show']);
 
+
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
@@ -40,15 +41,17 @@ Route::middleware(['auth:sanctum', 'log.activity'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
     
-    Route::post('/posts', [PostController::class, 'store']);
+    Route::post('s/post', [PostController::class, 'store']);
     Route::put('/posts/{id}', [PostController::class, 'update']);
     Route::delete('/posts/{id}', [PostController::class, 'destroy']);
     Route::get('/my-posts', [PostController::class, 'myPosts']);
+    
     
     Route::post('/comments', [CommentController::class, 'store']);
     Route::put('/comments/{id}', [CommentController::class, 'update']);
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
     Route::get('/my-comments', [CommentController::class, 'myComments']);
+
     
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
         

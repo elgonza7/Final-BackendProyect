@@ -1,4 +1,4 @@
-<nav style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0; margin: 0; position: sticky; top: 0; z-index: 100;">
+<nav style="background: linear-gradient(135deg, #5c78f5 0%, #754f9c 100%); padding: 0; margin: 0; position: sticky; top: 0; z-index: 100;">
     <div style="max-width: 900px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 70px;">
         <!-- Logo/Titulo -->
         <div style="display: flex; align-items: center; gap: 20px;">
@@ -7,11 +7,9 @@
             </a>
         </div>
         
-        <!-- Menu derecha -->
+    
         <div style="display: flex; align-items: center; gap: 20px;">
             @auth
-                <!-- Usuario autenticado -->
-                <!-- Boton Crear Post -->
                 <a href="/crear-post" style="background: #e67e22; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: all 0.3s; display: inline-block;">
                     ➕ Crear Post
                 </a>
@@ -41,7 +39,6 @@
                     </div>
                 </div>
             @else
-                <!-- Usuario NO autenticado -->
                 <a href="/login" style="background: white; color: #667eea; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; transition: all 0.3s; display: inline-block; border: 2px solid white;">
                     🔑 Iniciar Sesión
                 </a>

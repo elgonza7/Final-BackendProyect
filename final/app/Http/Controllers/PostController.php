@@ -22,11 +22,28 @@ class PostController extends Controller
         return response()->json($posts);
     }
 
-
+    
     public function show($id)
     {
-        $post = Post::with('user', 'comments', 'categories')->findOrFail($id);
-        return view('post', ['post' => $post, 'currentUser' => auth()->user()]);
+        $post = Post::with('user', 'comments.user', 'categories')->findOrFail($id);
+        $categoryIds = $post->categories->pluck('id')->toArray();
+        $relatedPosts = [];
+        if (!empty($categoryIds)) {
+            $relatedPosts = Post::with(['user', 'categories'])
+                ->where('id', '!=', $id) // Excluir el post actual
+                ->whereHas('categories', function ($q) use ($categoryIds) {
+                    $q->whereIn('categories.id', $categoryIds);
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(3)
+                ->get();
+        }
+        
+        return view('post', [
+            'post' => $post, 
+            'currentUser' => auth()->user(),
+            'relatedPosts' => $relatedPosts
+        ]);
     }
     public function store(Request $request)
     {

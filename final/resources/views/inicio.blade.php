@@ -188,9 +188,8 @@
     @include('components.navbar')
     
     <div class="container">
-        <h1>📝 Blog - Publicaciones Recientes</h1>
+        <h1>Blog - Publicaciones Recientes</h1>
         
-        <!-- Filtro de categorías -->
         <div class="category-filter">
             <label>🏷️ Filtrar:</label>
             <button class="filter-btn active" data-category="">Todas</button>
@@ -201,12 +200,21 @@
 
         <div id="posts-list" class="loading">Cargando posts...</div>
     </div>
+ 
+
+    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 25px;">
+        <h3 style="color: #2c3e50; margin-bottom: 15px;">👥 Usuarios Conectados</h3>
+        <ul id="connected-users" style="list-style: none; padding: 0;">
+            <li style="padding: 8px 0; color: #7f8c8d;">Cargando usuarios conectados...</li>
+        </ul>
+    </div>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const postsList = document.getElementById('posts-list');
+            const connectedUsersList = document.getElementById('connected-users');
             let activeCategory = '';
 
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -297,8 +305,42 @@
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#39;');
             }
+            function fetchConnectedUsers() {
+                fetch('/connected-users')
+                    .then(response => response.json())
+                    .then(data => renderConnectedUsers(data.connected_users || []))
+                    .catch(() => {
+                        connectedUsersList.innerHTML = '<li style="padding: 8px 0; color: #e74c3c;">Error cargando usuarios conectados.</li>';
+                    });
+            }
+
+            function renderConnectedUsers(users) {
+                if (!Array.isArray(users) || users.length === 0) {
+                    connectedUsersList.innerHTML = '<li style="padding: 8px 0; color: #7f8c8d;">No hay usuarios conectados.</li>';
+                    return;
+                }
+
+                let html = '';
+                users.forEach(user => {
+                    const initial = escapeHtml((user.name || '?').charAt(0).toUpperCase());
+                    const avatar = user.avatar
+                        ? '<img src="/storage/' + escapeHtml(user.avatar) + '" alt="' + escapeHtml(user.name) + '" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">'
+                        : '<span style="width: 32px; height: 32px; border-radius: 50%; background: #3498db; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">' + initial + '</span>';
+
+                    html += '<li style="padding: 8px 0; border-bottom: 1px solid #ecf0f1; display: flex; align-items: center; gap: 10px;">';
+                    html += avatar;
+                    html += '<span style="color: #2c3e50; font-weight: 500;">' + escapeHtml(user.name) + '</span>';
+                    html += '<span style="width: 10px; height: 10px; background: #27ae60; border-radius: 50%; margin-left: auto;"></span>';
+                    html += '</li>';
+                });
+
+                connectedUsersList.innerHTML = html;
+            }
 
             fetchPosts();
+            fetchConnectedUsers();
+            // Refrescar usuarios conectados cada 30 segundos
+            setInterval(fetchConnectedUsers, 30000);
         });
     </script>
 </body>

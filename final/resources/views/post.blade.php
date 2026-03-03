@@ -168,6 +168,76 @@
             color: #7f8c8d;
             font-style: italic;
         }
+        /* Estilos para Posts Relacionados */
+        .related-posts-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 2px solid #e9ecef;
+        }
+        .related-posts-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .related-post-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .related-post-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            border-left-color: #e67e22;
+        }
+        .related-post-card:last-child {
+            margin-bottom: 0;
+        }
+        .related-post-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .related-post-title a {
+            text-decoration: none;
+            color: #3498db;
+            transition: color 0.3s;
+        }
+        .related-post-title a:hover {
+            color: #e67e22;
+        }
+        .related-post-meta {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .related-post-categories {
+            margin-top: 8px;
+        }
+        .related-category-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-right: 5px;
+            margin-top: 3px;
+        }
+        .no-related-posts {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
         @media (max-width: 768px) {
             .post-container {
                 grid-template-columns: 1fr;
@@ -227,8 +297,7 @@
                         <a href="/login" class="add-comment-btn">🔑 Inicia sesión para comentar</a>
                     @endauth
                 </div>
-                
-                <!--comentarios -->
+
                 @if($post->comments && $post->comments->count() > 0)
                     <div class="comments-section">
                         <h2>💬 Comentarios ({{ $post->comments->count() }})</h2>
@@ -265,6 +334,36 @@
                         <div class="no-comments">
                             No hay comentarios aún. ¡Sé el primero en comentar!
                         </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="related-posts-section">
+                <h3>📌 Posts Relacionados</h3>
+                @if(isset($relatedPosts) && $relatedPosts->count() > 0)
+                    @foreach($relatedPosts as $related)
+                        <div class="related-post-card">
+                            <div class="related-post-title">
+                                <a href="/post/{{ $related->id }}">
+                                    {{ $related->title }}
+                                </a>
+                            </div>
+                            <div class="related-post-meta">
+                                👤 {{ $related->user->name ?? 'Anónimo' }} • 
+                                📅 {{ $related->created_at->format('d/m/Y') }}
+                            </div>
+                            @if($related->categories && $related->categories->count() > 0)
+                                <div class="related-post-categories">
+                                    @foreach($related->categories as $category)
+                                        <span class="related-category-badge">{{ $category->name }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                @else
+                    <div class="no-related-posts">
+                        No se encontraron posts relacionados con este tema.
                     </div>
                 @endif
             </div>

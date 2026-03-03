@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ConnectedUserController;
 use App\Http\Controllers\Web\AuthController;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     return view('inicio', ['currentUser' => auth()->user()]);
 })->name('home');
+Route::get('/connected-users', [ConnectedUserController::class, 'index'])->name('connected-users');
 
 Route::get('/test', function () {
     return view('test');
@@ -36,7 +38,6 @@ Route::get('/post/{id}', [PostController::class, 'show']);
 Route::post('/post', [PostController::class, 'store']);
 Route::post('/post/update/{id}', [PostController::class, 'update']);
 Route::post('/post/delete/{id}', [PostController::class, 'destroy']);
-
 Route::middleware(['auth'])->group(function () {
     
     Route::get('/crear-post', [PostController::class, 'createForm'])->name('post.create');
@@ -72,11 +73,13 @@ Route::middleware(['auth'])->group(function () {
     })->name('user.profile');
 
     Route::get('/admin/usuarios', function () {
-        if (!auth()->user()->hasRole('admin')) {
-            abort(403, 'No tienes permisos para acceder a esta página.');
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403);
         }
-        $users = App\Models\User::withCount(['posts', 'comments'])->with('roles')->orderBy('created_at', 'desc')->get();
+        $users = App\Models\User::with('roles')->get();
         return view('usuarios', ['users' => $users]);
     })->name('admin.users');
+        
+
 });
 

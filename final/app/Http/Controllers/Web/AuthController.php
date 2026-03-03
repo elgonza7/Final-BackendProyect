@@ -12,9 +12,7 @@ use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
-    /**
-     * Mostrar formulario de login
-     */
+
     public function showLogin()
     {
         if (Auth::check()) {
@@ -23,9 +21,6 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * Procesar login
-     */
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -53,9 +48,7 @@ class AuthController extends Controller
             ->withInput();
     }
 
-    /**
-     * Mostrar formulario de registro
-     */
+
     public function showRegister()
     {
         if (Auth::check()) {
@@ -63,10 +56,6 @@ class AuthController extends Controller
         }
         return view('auth.register');
     }
-
-    /**
-     * Procesar registro
-     */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -87,15 +76,11 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Asignar rol de usuario por defecto
         $user->assignRole('user');
-
-        // Marcar email como verificado automáticamente para web
-        // (En producción, puedes implementar verificación por email)
         $user->email_verified_at = now();
         $user->save();
 
-        // Iniciar sesión automáticamente
+
         Auth::login($user);
 
         return redirect('/')

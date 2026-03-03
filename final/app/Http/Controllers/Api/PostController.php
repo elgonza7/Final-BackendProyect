@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
-    /**
-     * Listar todos los posts (público - usuarios y admins pueden ver)
-     */
+
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -30,10 +28,6 @@ class PostController extends Controller
 
         return response()->json($posts, 200);
     }
-
-    /**
-     * Mostrar un post específico
-     */
     public function show($id)
     {
         $post = Post::with(['user', 'comments.user', 'categories'])->findOrFail($id);
@@ -89,15 +83,23 @@ class PostController extends Controller
         ], 201);
     }
 
-    /**
-     * Actualizar un post existente
-     * Solo el propietario o admin pueden editar
-     */
+    public function postsbycategory($id)
+    {
+        $posts = Post::with(['user', 'comments', 'categories'])
+            ->whereHas('categories', function ($q) use ($id) {
+                $q->where('categories.id', $id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($posts, 200);
+    }
+
+
+
     public function update(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-
-        // Verificar que el usuario sea el propietario o tenga permiso de editar posts
         if ($post->user_id !== $request->user()->id && !$request->user()->can('edit posts')) {
             return response()->json([
                 'message' => 'No tienes permiso para editar este post'
@@ -135,11 +137,6 @@ class PostController extends Controller
             'post' => $post,
         ], 200);
     }
-
-    /**
-     * Eliminar un post
-     * Solo el propietario o admin pueden eliminar
-     */
     public function destroy(Request $request, $id)
     {
         $post = Post::findOrFail($id);
@@ -164,7 +161,7 @@ class PostController extends Controller
     }
 
     /**
-     * Obtener posts del usuario autenticado
+
      */
     public function myPosts(Request $request)
     {

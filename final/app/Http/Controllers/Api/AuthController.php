@@ -13,9 +13,6 @@ use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
-    /**
-     * Registrar un nuevo usuario
-     */
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -39,7 +36,6 @@ class AuthController extends Controller
 
         // Asignar rol de usuario por defecto
         $user->assignRole('user');
-
         // Disparar evento de registro (esto enviará el email de verificación)
         event(new Registered($user));
 
@@ -57,10 +53,6 @@ class AuthController extends Controller
             'token' => $token,
         ], 201);
     }
-
-    /**
-     * Iniciar sesión
-     */
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -87,6 +79,7 @@ class AuthController extends Controller
         $this->logActivity($user, 'login', 'Usuario inició sesión', $request);
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        //$user -> load ('roles', 'permissions'); 
 
         return response()->json([
             'message' => 'Inicio de sesión exitoso',
@@ -95,9 +88,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Cerrar sesión
-     */
     public function logout(Request $request)
     {
         // Registrar actividad de logout
@@ -168,9 +158,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Registrar actividad del usuario
-     */
     private function logActivity(User $user, string $type, string $description, Request $request)
     {
         UserActivity::create([
