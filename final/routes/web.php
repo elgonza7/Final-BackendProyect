@@ -32,7 +32,6 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
-
 Route::get('/post', [PostController::class, 'index']);
 Route::get('/post/{id}', [PostController::class, 'show']);
 Route::post('/post', [PostController::class, 'store']);
@@ -43,7 +42,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/crear-post', [PostController::class, 'createForm'])->name('post.create');
     Route::post('/post/crear', [PostController::class, 'storeFromWeb'])->name('post.store');
     Route::post('/post/delete/{id}', [PostController::class, 'destroyFromWeb'])->name('post.delete');
-
     Route::get('/comments/{id}', function($id) {
         $post = App\Models\Post::findOrFail($id);
         return view('comments', ['post' => $post, 'currentUser' => auth()->user()]);

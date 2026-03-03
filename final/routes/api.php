@@ -45,8 +45,6 @@ Route::middleware(['auth:sanctum', 'log.activity'])->group(function () {
     Route::put('/posts/{id}', [PostController::class, 'update']);
     Route::delete('/posts/{id}', [PostController::class, 'destroy']);
     Route::get('/my-posts', [PostController::class, 'myPosts']);
-    
-    
     Route::post('/comments', [CommentController::class, 'store']);
     Route::put('/comments/{id}', [CommentController::class, 'update']);
     Route::delete('/comments/{id}', [CommentController::class, 'destroy']);
@@ -61,10 +59,8 @@ Route::middleware(['auth:sanctum', 'log.activity'])->group(function () {
         
         Route::get('/users', [AdminController::class, 'getAllUsers']);
         Route::get('/users/{id}', [AdminController::class, 'getUser']);
-        
         Route::get('/activities', [AdminController::class, 'getAllActivities']);
         Route::get('/users/{id}/activities', [AdminController::class, 'getUserActivities']);
-        
         Route::get('/statistics', [AdminController::class, 'getStatistics']);
         
         Route::post('/users/{id}/roles', [AdminController::class, 'assignRole']);

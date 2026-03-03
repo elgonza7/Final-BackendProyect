@@ -36,19 +36,14 @@ class PostController extends Controller
             'post' => $post,
         ], 200);
     }
-
-    /**
-     * Crear un nuevo post (solo usuarios autenticados con permiso)
-     */
     public function store(Request $request)
     {
-        // Verificar permiso
         if (!$request->user()->can('create posts')) {
             return response()->json([
                 'message' => 'No tienes permiso para crear posts'
             ], 403);
-        }
 
+        }
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -62,21 +57,17 @@ class PostController extends Controller
             'content' => $validatedData['content'],
             'user_id' => $request->user()->id,
         ];
-
-        // Procesar imagen si existe
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('posts', 'public');
         }
 
-        $post = Post::create($data);
 
-        // Sincronizar categorías
+        $post = Post::create($data);
         if (isset($validatedData['categories'])) {
             $post->categories()->sync($validatedData['categories']);
         }
 
         $post->load(['user', 'categories']);
-
         return response()->json([
             'message' => 'Post creado exitosamente',
             'post' => $post,
@@ -91,6 +82,8 @@ class PostController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->get();
+
+
 
         return response()->json($posts, 200);
     }
@@ -113,10 +106,7 @@ class PostController extends Controller
             'categories' => 'nullable|array',
             'categories.*' => 'exists:categories,id',
         ]);
-
-        // Actualizar imagen si se proporciona
         if ($request->hasFile('image')) {
-            // Eliminar imagen anterior si existe
             if ($post->image) {
                 Storage::disk('public')->delete($post->image);
             }
@@ -124,8 +114,6 @@ class PostController extends Controller
         }
 
         $post->update($validatedData);
-
-        // Actualizar categorías si se proporcionan
         if (isset($validatedData['categories'])) {
             $post->categories()->sync($validatedData['categories']);
         }
@@ -140,15 +128,11 @@ class PostController extends Controller
     public function destroy(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-
-        // Verificar que el usuario sea el propietario o admin
         if ($post->user_id !== $request->user()->id && !$request->user()->hasRole('admin')) {
             return response()->json([
                 'message' => 'No tienes permiso para eliminar este post'
             ], 403);
         }
-
-        // Eliminar imagen si existe
         if ($post->image) {
             Storage::disk('public')->delete($post->image);
         }

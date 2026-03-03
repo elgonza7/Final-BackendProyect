@@ -33,13 +33,8 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
-        // Asignar rol de usuario por defecto
         $user->assignRole('user');
-        // Disparar evento de registro (esto enviará el email de verificación)
         event(new Registered($user));
-
-        // Enviar notificación de bienvenida
         $user->notify(new WelcomeNotification($user));
 
         // Registrar actividad
@@ -74,13 +69,8 @@ class AuthController extends Controller
                 'message' => 'Credenciales incorrectas'
             ], 401);
         }
-
-        // Registrar actividad de login
         $this->logActivity($user, 'login', 'Usuario inició sesión', $request);
-
         $token = $user->createToken('auth_token')->plainTextToken;
-        //$user -> load ('roles', 'permissions'); 
-
         return response()->json([
             'message' => 'Inicio de sesión exitoso',
             'user' => $user->load('roles', 'permissions'),
@@ -90,10 +80,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        // Registrar actividad de logout
         $this->logActivity($request->user(), 'logout', 'Usuario cerró sesión', $request);
-
-        // Eliminar el token actual
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
@@ -101,19 +88,13 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Obtener información del usuario autenticado
-     */
+
     public function me(Request $request)
     {
         return response()->json([
             'user' => $request->user()->load('roles', 'permissions')
         ], 200);
     }
-
-    /**
-     * Verificar email
-     */
     public function verifyEmail(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);
@@ -140,9 +121,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * Reenviar email de verificación
-     */
     public function resendVerificationEmail(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {

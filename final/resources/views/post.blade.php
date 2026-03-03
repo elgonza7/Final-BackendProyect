@@ -252,7 +252,6 @@
         <a href="/" class="back-btn">← Volver a inicio</a>
         
         <div class="post-container">
-            <!-- Post Principal -->
             <div class="post-card">
                 @if(session('success'))
                     <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
@@ -368,7 +367,6 @@
                 @endif
             </div>
 
-            <!-- Sidebar de Información -->
             <div class="sidebar">
 
                 <h3>📊 Información</h3>
@@ -385,7 +383,6 @@
     </div>
 
     <script>
-        // Función para calcular tiempo relativo de una manera más amigable
         document.addEventListener('DOMContentLoaded', function() {
             const timeElements = document.querySelectorAll('.time-ago');
             

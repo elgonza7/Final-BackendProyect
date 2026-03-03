@@ -9,9 +9,6 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    /**
-     * Obtener todos los usuarios
-     */
     public function getAllUsers(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -22,10 +19,6 @@ class AdminController extends Controller
 
         return response()->json($users, 200);
     }
-
-    /**
-     * Obtener un usuario específico con toda su información
-     */
     public function getUser($id)
     {
         $user = User::with(['roles', 'permissions', 'posts', 'comments'])
@@ -36,10 +29,6 @@ class AdminController extends Controller
             'user' => $user,
         ], 200);
     }
-
-    /**
-     * Obtener todas las actividades de todos los usuarios
-     */
     public function getAllActivities(Request $request)
     {
         $perPage = $request->input('per_page', 50);
@@ -60,10 +49,6 @@ class AdminController extends Controller
 
         return response()->json($activities, 200);
     }
-
-    /**
-     * Obtener actividades de un usuario específico
-     */
     public function getUserActivities($userId, Request $request)
     {
         $perPage = $request->input('per_page', 50);
@@ -79,10 +64,6 @@ class AdminController extends Controller
             'activities' => $activities,
         ], 200);
     }
-
-    /**
-     * Obtener estadísticas de usuarios
-     */
     public function getStatistics()
     {
         $totalUsers = User::count();
@@ -107,9 +88,6 @@ class AdminController extends Controller
         ], 200);
     }
 
-    /**
-     * Asignar rol a un usuario
-     */
     public function assignRole(Request $request, $userId)
     {
         $request->validate([
@@ -125,9 +103,6 @@ class AdminController extends Controller
         ], 200);
     }
 
-    /**
-     * Remover rol de un usuario
-     */
     public function removeRole(Request $request, $userId)
     {
         $request->validate([
@@ -142,10 +117,6 @@ class AdminController extends Controller
             'user' => $user->load('roles')
         ], 200);
     }
-
-    /**
-     * Dar permiso a un usuario
-     */
     public function givePermission(Request $request, $userId)
     {
         $request->validate([
@@ -161,9 +132,6 @@ class AdminController extends Controller
         ], 200);
     }
 
-    /**
-     * Revocar permiso de un usuario
-     */
     public function revokePermission(Request $request, $userId)
     {
         $request->validate([

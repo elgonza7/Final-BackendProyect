@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CommentController extends Controller
 {
-    /**
-     * Listar todos los comentarios (público)
-     */
+
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 50);
@@ -28,10 +26,6 @@ class CommentController extends Controller
 
         return response()->json($comments, 200);
     }
-
-    /**
-     * Mostrar un comentario específico
-     */
     public function show($id)
     {
         $comment = Comment::with(['user', 'post'])->findOrFail($id);
@@ -40,28 +34,19 @@ class CommentController extends Controller
             'comment' => $comment,
         ], 200);
     }
-
-    /**
-     * Crear un nuevo comentario
-     * Usuarios pueden crear comentarios en cualquier post
-     */
     public function store(Request $request)
     {
-        // Verificar permiso
         if (!$request->user()->can('create comments')) {
             return response()->json([
                 'message' => 'No tienes permiso para crear comentarios'
             ], 403);
         }
-
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'content' => 'required|string',
             'post_id' => 'required|exists:posts,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
-
-        // Verificar que el post existe
         $post = Post::findOrFail($validatedData['post_id']);
 
         $data = [
@@ -70,8 +55,6 @@ class CommentController extends Controller
             'post_id' => $validatedData['post_id'],
             'user_id' => $request->user()->id,
         ];
-
-        // Procesar imagen si existe
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('comments', 'public');
         }
@@ -84,31 +67,21 @@ class CommentController extends Controller
             'comment' => $comment,
         ], 201);
     }
-
-    /**
-     * Actualizar un comentario
-     * Solo el propietario puede editar su comentario
-     */
     public function update(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
-
-        // Verificar que el usuario sea el propietario
         if ($comment->user_id !== $request->user()->id) {
             return response()->json([
                 'message' => 'No tienes permiso para editar este comentario'
             ], 403);
         }
-
         $validatedData = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'content' => 'sometimes|required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
-
-        // Actualizar imagen si se proporciona
         if ($request->hasFile('image')) {
-            // Eliminar imagen anterior si existe
+
             if ($comment->image) {
                 Storage::disk('public')->delete($comment->image);
             }
@@ -124,40 +97,28 @@ class CommentController extends Controller
         ], 200);
     }
 
-    /**
-     * Eliminar un comentario
-     * El propietario o admin pueden eliminar
-     */
     public function destroy(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
-
-        // Verificar que el usuario sea el propietario o admin
         if ($comment->user_id !== $request->user()->id && !$request->user()->hasRole('admin')) {
             return response()->json([
                 'message' => 'No tienes permiso para eliminar este comentario'
             ], 403);
         }
 
-        // Eliminar imagen si existe
+
         if ($comment->image) {
             Storage::disk('public')->delete($comment->image);
         }
-
         $comment->delete();
-
         return response()->json([
             'message' => 'Comentario eliminado exitosamente'
         ], 200);
     }
 
-    /**
-     * Obtener comentarios de un post específico
-     */
     public function getPostComments($postId)
     {
         $post = Post::findOrFail($postId);
-        
         $comments = Comment::with(['user'])
             ->where('post_id', $postId)
             ->orderBy('created_at', 'desc')
@@ -168,14 +129,9 @@ class CommentController extends Controller
             'comments' => $comments,
         ], 200);
     }
-
-    /**
-     * Obtener comentarios del usuario autenticado
-     */
     public function myComments(Request $request)
     {
         $perPage = $request->input('per_page', 50);
-
         $comments = Comment::with(['user', 'post'])
             ->where('user_id', $request->user()->id)
             ->orderBy('created_at', 'desc')

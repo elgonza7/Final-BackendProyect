@@ -74,6 +74,13 @@ class PostController extends Controller
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
+        $searchImg = $post->image;
+        if($searchImg){
+            $imagePath = public_path('storage/' . $searchImg);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
         $post->delete();
 
         return response()->json(null, 204);
@@ -84,17 +91,11 @@ class PostController extends Controller
         return response()->json($post);
     }
     
-    /**
-     * Show create post form
-     */
     public function createForm(Request $request)
     {
         return view('crearpost', ['currentUser' => auth()->user()]);
     }
-    
-    /**
-     * Store post from web form
-     */
+ 
     public function storeFromWeb(Request $request)
     {
         $validatedData = $request->validate([
@@ -123,15 +124,10 @@ class PostController extends Controller
         
         return redirect('/')->with('success', '¡Post creado exitosamente!');
     }
-    
-    /**
-     * Delete post from web
-     */
+
     public function destroyFromWeb($id)
     {
         $post = Post::findOrFail($id);
-        
-        // Verificar que el usuario sea el propietario o admin
         if ($post->user_id != auth()->id() && !auth()->user()->hasRole('admin')) {
             return response()->json(['error' => 'No tienes permiso para eliminar este post'], 403);
         }
